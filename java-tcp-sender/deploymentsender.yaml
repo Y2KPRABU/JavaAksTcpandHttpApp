@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-tcp-sender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-tcp-sender
+  template:
+    metadata:
+      labels:
+        app: java-tcp-sender
+    spec:
+      containers:
+      - name: java-tcp-sender
+        image: y2kpr.azurecr.io/java-tcp-sender:v7
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "256Mi"
+          limits:
+            cpu: "100m"
+            memory: "400Mi"
+        env:
+        - name: RECEIVER_HOST
+          value: "java-tcp-receiver-service"
+        command: ["tail"]
+        args: ["-f", "/dev/null"]
+
+# Standalone Pod manifest for development with a fixed pod name
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: java-tcp-sender-dev
+  labels:
+    app: java-tcp-sender-dev
+spec:
+  containers:
+  - name: java-tcp-sender
+    image: y2kpr.azurecr.io/java-tcp-sender:v7
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "256Mi"
+      limits:
+        cpu: "100m"
+        memory: "400Mi"
+    env:
+    - name: RECEIVER_HOST
+      value: "java-tcp-receiver-service"
+    command: ["tail"]
+    args: ["-f", "/dev/null"]

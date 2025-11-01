@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-tcp-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-tcp-receiver
+  template:
+    metadata:
+      labels:
+        app: java-tcp-receiver
+    spec:
+      containers:
+      - name: java-tcp-receiver
+        image: y2kpr.azurecr.io/java-tcp-receiver:v1.6
+        ports:
+        - containerPort: 12345
+        - containerPort: 9878
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "256Mi"
+          limits:
+            cpu: "100m"
+            memory: "400Mi"
+        env:
+        # Add environment variables here if needed
+      
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-tcp-receiver-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: java-tcp-receiver
+  ports:
+  - name: tcp12345
+    protocol: TCP
+    port: 12345
+    targetPort: 12345
+  - name: tcp9878
+    protocol: TCP
+    port: 9878
+    targetPort: 9878
+  - name: http8080
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+
+# Standalone Pod manifest for development with a fixed pod name
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: java-tcp-receiver-dev
+  labels:
+    app: java-tcp-receiver
+spec:
+  containers:
+  - name: java-tcp-receiver
+    image: y2kpr.azurecr.io/java-tcp-receiver:v1.6
+    ports:
+    - containerPort: 12345
+    - containerPort: 9878
+    - containerPort: 8080
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "256Mi"
+      limits:
+        cpu: "100m"
+        memory: "400Mi"
+    env:
+    # Add environment variables here if needed
+    
+    command: ["tail"]
+    args: ["-f", "/dev/null"]

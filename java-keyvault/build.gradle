@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.azure:azure-security-keyvault-secrets:4.5.1'
+    implementation 'com.azure:azure-identity:1.8.1'
+}
+
+application {
+    mainClass = 'com.example.keyvault.KeyVaultCsiExample'
+}
+
+group = 'com.example'
+version = '1.0-SNAPSHOT'
+sourceCompatibility = '11'

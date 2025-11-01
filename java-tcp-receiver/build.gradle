@@ -1,0 +1,78 @@
+// Apply the Java plugin to add support for Java
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+// Set the group and version for your project
+group = 'com.receiver'
+version = '1.1'
+
+// Define repositories to search for dependencies
+repositories {
+    mavenCentral() // Use Maven Central repository
+}
+
+// Declare project dependencies here
+dependencies {
+    // QuickFIX/J dependencies for FIX protocol support
+    implementation 'org.quickfixj:quickfixj-core:2.3.2'
+    implementation 'org.quickfixj:quickfixj-messages-fix44:2.3.2'
+}
+
+
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+// Set the encoding for Java source files to UTF-8
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+jar {
+    from('configs') {
+        into 'configs'
+    }
+}
+
+// Explicitly set the Java source directory to 'src'
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        resources {
+            srcDirs = ['configs']
+            include '**/*'
+        }
+    }
+}
+
+
+// Task to extract and list the contents of the built JAR
+task listJar(type: Copy) {
+    from zipTree("$buildDir/libs/java-tcp-receiver-1.0.jar")
+    into "$buildDir/jar-contents"
+}
+
+// Task to update the image tag in deployment.yaml after build
+task updateYamlImageTag {
+    doLast {
+        def yamlFile = file('deployment.yaml')
+        def oldContent = yamlFile.text
+        def newVersion = project.version
+        def newContent = oldContent.replaceAll(/(y2kpr\.azurecr\.io\/java-tcp-receiver:v)[\w\d\.\-]+/, "\$1${newVersion}")
+        yamlFile.text = newContent
+        println "Updated deployment.yaml image tag to version: ${newVersion}"
+    }
+}
+
+build.finalizedBy(updateYamlImageTag)
+
+// Ensure the jar block is at the end and sets the Main-Class manifest attribute
+
+shadowJar {
+    manifest {
+        attributes 'Main-Class': 'Launcher'
+    }
+}

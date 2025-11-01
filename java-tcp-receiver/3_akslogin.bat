@@ -1,0 +1,1 @@
+kubectl exec -it java-tcp-receiver-dev -- bash

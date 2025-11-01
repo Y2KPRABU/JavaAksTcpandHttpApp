@@ -1,0 +1,62 @@
+// Apply the Java plugin to add support for Java
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+// Set the group and version for your project
+group = 'com.sender'
+version = '1.0'
+
+// Define repositories to search for dependencies
+repositories {
+    mavenCentral() // Use Maven Central repository
+}
+
+// Declare project dependencies here
+dependencies {
+    // Add any necessary dependencies here, e.g. implementation 'org.example:lib:1.0'
+        // QuickFIX/J dependencies for FIX protocol support
+    implementation 'org.quickfixj:quickfixj-core:2.3.2'
+    implementation 'org.quickfixj:quickfixj-messages-fix44:2.3.2'
+
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+// Set the encoding for Java source files to UTF-8
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Explicitly set the Java source directory to 'src'
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        resources {
+            srcDirs = ['configs']
+            include '**/*'
+        }
+    }
+}
+jar {
+    from('configs') {
+        into 'configs'
+    }
+}
+
+// Task to extract and list the contents of the built JAR
+task listJar(type: Copy) {
+    from zipTree("$buildDir/libs/java-tcp-sender-1.0-all.jar")
+    into "$buildDir/jar-contents"
+}
+
+
+shadowJar {
+    manifest {
+        attributes 'Main-Class': 'Launcher'
+    }
+}
