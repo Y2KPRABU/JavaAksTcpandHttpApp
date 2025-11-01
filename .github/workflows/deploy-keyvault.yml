@@ -1,0 +1,72 @@
+name: Deploy Key Vault Integration
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ main ]
+    paths:
+      - 'java-keyvault/**'
+
+env:
+  AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  KEYVAULT_NAME: ${{ secrets.KEYVAULT_NAME }}
+  CLUSTER_NAME: ${{ secrets.AKS_CLUSTER_NAME }}
+  RESOURCE_GROUP: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Get AKS Credentials
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        cluster-name: ${{ env.CLUSTER_NAME }}
+
+    - name: Install CSI Driver
+      run: |
+        helm repo add csi-secrets-store-provider-azure https://azure.github.io/secrets-store-csi-driver-provider-azure/charts
+        helm upgrade --install csi csi-secrets-store-provider-azure/csi-secrets-store-provider-azure --namespace kube-system --create-namespace
+
+    - name: Create Kubernetes Secrets
+      run: |
+        # Create secret for Azure SP credentials
+        kubectl create secret generic azure-sp-secret \
+          --from-literal=clientid=${{ env.CLIENT_ID }} \
+          --from-literal=clientsecret=${{ env.CLIENT_SECRET }} \
+          --from-literal=tenantid=${{ env.TENANT_ID }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Deploy Key Vault Integration
+      working-directory: ./java-keyvault/k8s
+      run: |
+        # Apply service account
+        kubectl apply -f service-account-token.yaml
+        
+        # Set environment variables for SecretProviderClass
+        export AZURE_TENANT_ID="${{ env.TENANT_ID }}"
+        export AZURE_CLIENT_ID="${{ env.CLIENT_ID }}"
+        export AZURE_CLIENT_SECRET="${{ env.CLIENT_SECRET }}"
+        
+        # Apply SecretProviderClass and Pod
+        kubectl apply -f secretproviderclass-sp.yaml
+        kubectl apply -f pod-secret-test-sp.yaml
+
+    - name: Verify Deployment
+      run: |
+        echo "Waiting for pod to be ready..."
+        kubectl wait --for=condition=ready pod/kv-demo-sp --timeout=120s
+        
+        echo "Pod status:"
+        kubectl get pods kv-demo-sp

@@ -2,6 +2,17 @@
 java-keyvault/k8s/secrets-store-creds.yaml
 **/secrets-store-creds.yaml
 *secrets*.yaml
+**/.env
+**/*.key
+**/*.pem
+**/*.pfx
+**/*.p12
+**/credentials.json
+**/service-account.json
+scripts/collect-github-secrets.ps1
+**/collect-github-secrets.ps1
+java-keyvault/k8s/setup-secrets.ps1
+**/setup-secrets.ps1
 
 # Java specific
 *.class
