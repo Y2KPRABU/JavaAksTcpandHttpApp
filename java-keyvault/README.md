@@ -6,7 +6,6 @@ Usage
 -----
 
 Build with Maven:
-this is my secretid 9f827827-f613-4de0-9dc2-7922cd6b78d2 and secret value u6b8Q~X2vhue3Zfpsl1EW7N.LU5FB6YbSt8TAbam
 ```powershell
 mvn -f java-keyvault/pom.xml package
 ```
