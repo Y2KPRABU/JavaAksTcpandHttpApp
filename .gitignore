@@ -11,9 +11,6 @@ java-keyvault/k8s/secrets-store-creds.yaml
 **/service-account.json
 scripts/collect-github-secrets.ps1
 **/collect-github-secrets.ps1
-java-keyvault/k8s/setup-secrets.ps1
-**/setup-secrets.ps1
-
 # Java specific
 *.class
 *.log
